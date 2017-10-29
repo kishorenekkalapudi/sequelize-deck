@@ -79,16 +79,11 @@ export default class Presentation extends React.Component {
   render() {
     return (
       <Deck transition={["zoom", "slide"]} theme={theme} transitionDuration={500}>
-        <Slide
-          transition={["fade"]}
-          bgColor="white"
-          bgImage={images.seq.replace("/", "")}
-          bgLighten={0.75}
-        >
+        <Slide transition={["fade"]} bgColor="white" bgImage={images.seq.replace("/", "")}>
           <Heading size={1} fit caps lineHeight={1} textColor="secondary">
             Sequelize
           </Heading>
-          <Text margin="10px 0 0" textColor="secondary" size={1} fit bold>
+          <Text margin="10px 0 0" textColor="secondary" bgColor="#68aac7" size={1} fit bold>
             Sequelize is a promise-based ORM
           </Text>
         </Slide>
@@ -113,6 +108,7 @@ export default class Presentation extends React.Component {
           <CodePane
             lang="sql"
             source={require("raw-loader!../assets/using-sql")}
+            style={{ fontSize: "0.6em" }}
             margin="20px auto"
             overflow="overflow"
           />
@@ -125,6 +121,7 @@ export default class Presentation extends React.Component {
           <CodePane
             lang="jsx"
             source={require("raw-loader!../assets/using-seq")}
+            style={{ fontSize: "0.6em" }}
             margin="20px auto"
             overflow="overflow"
           />
