@@ -1,0 +1,7 @@
+  const options = {
+    limit: 1,
+    include: ["coach", "players"]
+  };
+  Team.findAll(options).then(teams => {
+    console.log(teams);
+  })

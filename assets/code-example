@@ -1,0 +1,171 @@
+"use strict";
+
+var Sequelize = require("sequelize");
+
+// CREATE DATABASE CONNECTION AND SQLITE DB-FILE
+var sequelize = new Sequelize("mainDB", null, null, {
+  dialect: "sqlite",
+  storage: "./test.sqlite",
+  logging: false,
+  operatorsAliases: false,
+  define: {
+    timestamps: false,
+    underscored: true
+  }
+});
+
+// NOTIFY CONNECTION STATUS
+sequelize.authenticate().then(
+  function(err) {
+    console.log("Connection has been established successfully.");
+  },
+  function(err) {
+    console.log("Unable to connect to the database:", err);
+  }
+);
+
+// CREATE MODELS
+const nameField = {
+  name: Sequelize.STRING
+};
+var Coach = sequelize.define("Coach", nameField);
+var Team = sequelize.define("Team", nameField);
+var Player = sequelize.define("Player", nameField);
+var Shoe = sequelize.define("Shoe", nameField);
+
+// CREATE ASSOCIATIONS
+
+// puts foreignKey in the Player model
+// provides: Team.setPlayer() Team.getPlayer()
+Player.belongsTo(Team);
+
+// sets up a 1:m relationship
+// provides: Team.addPlayer(), etc.
+Team.hasMany(Player, { as: "players" });
+
+// puts foreignKey in the Team model
+// provides: Team.setCoach() Team.getCoach()
+Team.belongsTo(Coach, { as: "coach" });
+
+// Player to Shoe M:M associations
+// stored in the same-named join table: 'PlayerShoe'
+// the `through` property is required in `belongsToMany` associations
+// aliased differently in each model
+Player.belongsToMany(Shoe, { through: "playerShoes", as: "sponsors" });
+Shoe.belongsToMany(Player, { through: "playerShoes", as: "contracts" });
+
+function title(msg) {
+  console.log(`${msg}`);
+}
+
+function dump(title, msg) {
+  console.log(title);
+  console.log(JSON.stringify(msg, null, 2));
+}
+
+function createRecords() {
+  title("\ncreate records in multiple tables with one command");
+  title("Team.create(team, options)");
+  const teams = [
+    {
+      name: "Lakers",
+      coach: { name: "Trump" },
+      players: [
+        { name: "LeBron", sponsors: [{ name: "Adidas" }, { name: "Nike" }] },
+        { name: "Kobe", sponsors: [{ name: "UnderArmor" }] },
+        { name: "Shaq", sponsors: [{ name: "Adidas" }, { name: "Nike" }] }
+      ]
+    },
+    {
+      name: "Warriors",
+      coach: { name: "Obama" },
+      players: [
+        { name: "KD", sponsors: [{ name: "Adidas" }, { name: "Nike" }] },
+        { name: "Steph", sponsors: [{ name: "UnderArmor" }] },
+        { name: "Klay", sponsors: [{ name: "UnderArmor" }] }
+      ]
+    }
+  ];
+  const options = {
+    include: [
+      { model: Coach, as: "coach" },
+      { model: Player, as: "players", include: [{ model: Shoe, as: "sponsors" }] }
+    ]
+  };
+
+  const promises = [];
+  teams.forEach(team => {
+    promises.push(Team.create(team, options));
+  });
+  return Promise.all(promises);
+}
+
+function findTeams() {
+  title("\nfind teams");
+  const options = {};
+  return Team.findAll(options).then(teams => dump("teams", teams));
+}
+
+function findTeamsWithCoach() {
+  title("\nfind teams with associated coach 1:1");
+  const options = {
+    include: ["coach"]
+  };
+  return Team.findAll(options).then(teams => dump("teams", teams));
+}
+
+function findTeamsWithCoachAndPlayers() {
+  title("\nfind teams with associated coach 1:1 and players 1:m");
+  const options = {
+    limit: 1,
+    include: ["coach", "players"]
+  };
+  return Team.findAll(options).then(teams => dump("teams", teams));
+}
+
+function findTeamsWithDeepAssociations() {
+  title("\nfind teams with associated coach 1:1 and players 1:m and player-sponsors nested 1:m");
+  const options = {
+    limit: 1,
+    include: [
+      "coach",
+      { limit: 1, model: Player, as: "players", include: [{ model: Shoe, as: "sponsors" }] }
+    ]
+  };
+  return Team.findAll(options).then(teams => dump("teams", teams));
+}
+
+function findPlayers() {
+  title("\nfind players");
+  const options = { limit: 3 };
+  return Player.findAll(options).then(players => dump("players", players));
+}
+
+function findPlayersWithTeam() {
+  title("\nfind players withe team 1:1");
+  const options = {
+    limit: 1,
+    include: [Team]
+  };
+  return Player.findAll(options).then(players => dump("players", players));
+}
+
+function findPlayersWithTeamAndSponsors() {
+  title("\nfind players with team 1:1 and sponsors 1:m");
+  const options = {
+    limit: 1,
+    include: [Team, "sponsors"]
+  };
+  return Player.findAll(options).then(players => dump("players", players));
+}
+
+sequelize
+  .sync({ force: true }) // force: true = DROP TABLES
+  .then(createRecords)
+  .then(findTeams)
+  .then(findTeamsWithCoach)
+  .then(findTeamsWithCoachAndPlayers)
+  .then(findTeamsWithDeepAssociations)
+  .then(findPlayers)
+  .then(findPlayersWithTeam)
+  .then(findPlayersWithTeamAndSponsors);

@@ -1,0 +1,15 @@
+SELECT `Team`.*,
+       `coach`.`id`        AS `coach.id`,
+       `coach`.`name`      AS `coach.name`,
+       `players`.`id`      AS `players.id`,
+       `players`.`name`    AS `players.name`,
+       `players`.`team_id` AS `players.team_id`
+FROM   (SELECT `Team`.`id`,
+               `Team`.`name`,
+               `Team`.`coach_id`
+        FROM   `teams` AS `Team`
+        LIMIT  1) AS `Team`
+       LEFT OUTER JOIN `coaches` AS `coach`
+                    ON `Team`.`coach_id` = `coach`.`id`
+       LEFT OUTER JOIN `players` AS `players`
+                    ON `Team`.`id` = `players`.`team_id`;
