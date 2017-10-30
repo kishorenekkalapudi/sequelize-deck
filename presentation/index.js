@@ -171,7 +171,7 @@ export default class Presentation extends React.Component {
             Made with ❤️ in San Bruno
           </Heading>
           <Heading size={2} caps fit lineHeight={1.5} textColor="primary">
-            Walmart Creative Dev Team
+            Walmart Creative Team Developers
           </Heading>
         </Slide>
       </Deck>
